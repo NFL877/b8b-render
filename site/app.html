@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centro de Gestión de Club</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --paper:#f6f3ea; --ink:#16211b; --ink-soft:#4b5c50; --line:#d9d2bf;
+    --red:#c8202b; --red-deep:#8f141c; --green:#1f6f4a; --green-deep:#123c29;
+    --surface:#ffffff; --surface-2:#efe9da; --focus:#1f6f4a;
+    --amber:#a5680c; --amber-bg:#f7e9cf;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#101812; --ink:#f1eee2; --ink-soft:#b6c0b4; --line:#2a372e;
+      --red:#ea4650; --red-deep:#ff6a72; --green:#49ab77; --green-deep:#7fcaa2;
+      --surface:#16211b; --surface-2:#1c2820; --focus:#49ab77;
+      --amber:#e0ab4d; --amber-bg:#2c2413;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#101812; --ink:#f1eee2; --ink-soft:#b6c0b4; --line:#2a372e;
+    --red:#ea4650; --red-deep:#ff6a72; --green:#49ab77; --green-deep:#7fcaa2;
+    --surface:#16211b; --surface-2:#1c2820; --focus:#49ab77;
+    --amber:#e0ab4d; --amber-bg:#2c2413;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--paper);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;line-height:1.5;}
+  a{color:inherit;}
+  button,input,select{font:inherit;color:inherit;}
+  ::selection{background:var(--red);color:#fff;}
+
+  h1,h2,h3,.display{
+    font-family:'Big Shoulders Display','Arial Narrow',sans-serif;font-weight:800;
+    text-transform:uppercase;letter-spacing:0.01em;text-wrap:balance;line-height:1;color:var(--ink);
+  }
+  .mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace;letter-spacing:0.04em;}
+
+  .wrap{max-width:1100px;margin-inline:auto;padding-inline:20px;}
+
+  .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--paper);border-bottom:1px solid var(--line);}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;padding-block:14px;gap:14px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:1.05rem;text-transform:uppercase;}
+  .brand .mark{width:30px;height:30px;border-radius:50%;background:var(--red);display:grid;place-items:center;color:#fff;font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:0.9rem;flex:none;}
+  .brand small{display:block;font-family:'IBM Plex Mono',monospace;font-weight:500;text-transform:none;font-size:0.62rem;color:var(--ink-soft);}
+  .status{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);display:flex;align-items:center;gap:6px;}
+  .status .dot{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none;}
+  .status.live .dot{background:var(--green);}
+  .status.off .dot{background:var(--red);}
+
+  nav.tabs{display:flex;gap:1px;background:var(--line);border:1px solid var(--line);overflow-x:auto;}
+  nav.tabs button{
+    flex:1 1 150px;background:var(--surface);border:none;padding:14px 14px;cursor:pointer;text-align:left;
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;
+    color:var(--ink-soft);display:flex;flex-direction:column;gap:3px;white-space:nowrap;
+  }
+  nav.tabs button .num{color:var(--red);font-size:0.68rem;}
+  nav.tabs button.active{background:var(--ink);color:var(--paper);}
+  nav.tabs button.active .num{color:var(--red-deep,#ff8087);}
+  nav.tabs button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;}
+
+  main{padding-block:36px 80px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  .head h2{font-size:clamp(1.6rem,4vw,2.2rem);margin:0;}
+  .head p{color:var(--ink-soft);font-size:0.92rem;margin:4px 0 0;max-width:52ch;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--red);display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .eyebrow::before{content:"§";color:var(--green);}
+
+  .subtabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .subtabs button{
+    background:var(--surface);border:1px solid var(--line);padding:8px 14px;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);
+  }
+  .subtabs button.active{background:var(--green);border-color:var(--green);color:#fff;}
+  .subpanel{display:none;}
+  .subpanel.active{display:block;}
+
+  .card{background:var(--surface);border:1px solid var(--line);}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--surface);}
+  table{width:100%;border-collapse:collapse;min-width:560px;}
+  thead th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:0.66rem;text-transform:uppercase;
+    letter-spacing:0.06em;color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);
+    white-space:nowrap;
+  }
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:0.92rem;vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.example td{color:var(--ink-soft);}
+  .exbadge{
+    font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.04em;
+    padding:2px 6px;border:1px solid var(--line);color:var(--ink-soft);margin-left:8px;white-space:nowrap;
+  }
+  .pill{font-family:'IBM Plex Mono',monospace;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.03em;padding:3px 8px;display:inline-block;border:1px solid var(--line);}
+  .pill.ok{color:var(--green);border-color:var(--green);}
+  .pill.warn{color:var(--amber);border-color:var(--amber);background:var(--amber-bg);}
+  .pill.bad{color:var(--red);border-color:var(--red);}
+  .row-flag-warn td:first-child{box-shadow:inset 3px 0 0 var(--amber);}
+  .row-flag-bad td:first-child{box-shadow:inset 3px 0 0 var(--red);}
+  .num-cell{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+  .del-btn{
+    background:none;border:1px solid var(--line);color:var(--ink-soft);cursor:pointer;
+    width:26px;height:26px;line-height:1;font-family:'IBM Plex Mono',monospace;
+  }
+  .del-btn:hover{border-color:var(--red);color:var(--red);}
+  .empty-row td{color:var(--ink-soft);font-style:italic;text-align:center;padding:20px;}
+
+  .add-form{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding:16px;background:var(--surface-2);
+    border:1px solid var(--line);border-top:none;
+  }
+  .field{display:flex;flex-direction:column;gap:4px;flex:1 1 140px;min-width:120px;}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:0.64rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);}
+  .field input,.field select{
+    padding:9px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:0.88rem;
+  }
+  .field input:focus-visible,.field select:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:1px;}
+  .add-btn{
+    background:var(--red);border:1px solid var(--red);color:#fff;padding:10px 18px;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;flex:none;
+  }
+  .add-btn:hover{background:var(--red-deep);border-color:var(--red-deep);}
+  .add-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:24px;}
+  .stat{background:var(--surface);padding:16px 18px;}
+  .stat .k{font-family:'IBM Plex Mono',monospace;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);display:block;margin-bottom:6px;}
+  .stat .v{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:1.7rem;font-variant-numeric:tabular-nums;}
+  .stat .v.neg{color:var(--red);}
+  .stat .v.pos{color:var(--green);}
+
+  .bars{display:flex;flex-direction:column;gap:10px;margin-bottom:26px;}
+  .bar-row{display:grid;grid-template-columns:140px 1fr 46px;gap:12px;align-items:center;font-size:0.86rem;}
+  .bar-row .name{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;text-transform:uppercase;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{height:10px;background:var(--surface-2);border:1px solid var(--line);position:relative;}
+  .bar-fill{height:100%;background:var(--green);}
+  .bar-row .val{font-family:'IBM Plex Mono',monospace;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-soft);}
+
+  .banner{
+    background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--amber);
+    padding:14px 18px;font-size:0.88rem;color:var(--ink-soft);margin-bottom:24px;
+  }
+  .clear-btn{
+    background:transparent;border:1px solid var(--line);color:var(--ink-soft);padding:7px 12px;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;margin-top:20px;
+  }
+  .clear-btn:hover{border-color:var(--red);color:var(--red);}
+
+  @media (max-width:640px){
+    nav.tabs{flex-wrap:nowrap;}
+    .bar-row{grid-template-columns:100px 1fr 40px;}
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="mark">AC</span><span>Centro de Gestión<small>Athletic Club Football Center</small></span></div>
+    <span class="status off" id="dbStatus"><span class="dot"></span><span id="dbStatusText">Conectando…</span></span>
+  </div>
+  <div class="wrap" style="padding-bottom:0;">
+    <nav class="tabs" id="mainTabs">
+      <button data-panel="plantilla" class="active"><span class="num">01</span>Plantilla y personas</button>
+      <button data-panel="planificacion"><span class="num">02</span>Planificación</button>
+      <button data-panel="admin"><span class="num">03</span>Administración</button>
+      <button data-panel="economico"><span class="num">04</span>Control económico</button>
+      <button data-panel="rendimiento"><span class="num">05</span>Rendimiento</button>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="offlineBanner" class="banner" hidden>
+    Esta vista no tiene acceso a los datos compartidos del club en este momento. Puedes seguir mirando la app, pero añadir o borrar filas no se guardará. Ábrela desde Claude para gestionar los datos reales.
+  </div>
+
+  <!-- 01 PLANTILLA -->
+  <section class="panel active" id="panel-plantilla">
+    <p class="eyebrow">Módulo 01</p>
+    <div class="head">
+      <div><h2>Plantilla, equipos y personas</h2><p>Fichas de jugadores/as, categorías, disponibilidad y documentación en un único sitio.</p></div>
+    </div>
+    <div class="subtabs">
+      <button class="sub-btn active" data-sub="jugadores">Jugadores/as</button>
+      <button class="sub-btn" data-sub="staff">Cuerpo técnico</button>
+    </div>
+    <div class="subpanel active" id="sub-jugadores" data-module="players"></div>
+    <div class="subpanel" id="sub-staff" data-module="staff"></div>
+  </section>
+
+  <!-- 02 PLANIFICACION -->
+  <section class="panel" id="panel-planificacion">
+    <p class="eyebrow">Módulo 02</p>
+    <div class="head">
+      <div><h2>Planificación y entrenamiento</h2><p>Sesiones por categoría, tipo de trabajo, carga (RPE 1–10) y objetivo.</p></div>
+    </div>
+    <div id="loadSummary" class="bars"></div>
+    <div data-module="sessions"></div>
+  </section>
+
+  <!-- 03 ADMIN -->
+  <section class="panel" id="panel-admin">
+    <p class="eyebrow">Módulo 03</p>
+    <div class="head">
+      <div><h2>Administración y documentación</h2><p>Licencias, seguros, autorizaciones y plazos — ordenados por fecha límite.</p></div>
+    </div>
+    <div data-module="procedures"></div>
+  </section>
+
+  <!-- 04 ECONOMICO -->
+  <section class="panel" id="panel-economico">
+    <p class="eyebrow">Módulo 04</p>
+    <div class="head">
+      <div><h2>Control económico y organización</h2><p>Ingresos y gastos del club, con balance en tiempo real.</p></div>
+    </div>
+    <div class="stats" id="financeStats"></div>
+    <div data-module="finance"></div>
+  </section>
+
+  <!-- 05 RENDIMIENTO -->
+  <section class="panel" id="panel-rendimiento">
+    <p class="eyebrow">Módulo 05</p>
+    <div class="head">
+      <div><h2>Rendimiento, informes y recursos</h2><p>Carga y minutos por jugador/a: convierte el seguimiento en información útil para el cuerpo técnico.</p></div>
+    </div>
+    <div id="perfSummary" class="bars"></div>
+    <div data-module="reports"></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  var MODULES = {
+    players: {
+      collection: "players",
+      columns: [
+        {key:"nombre", label:"Nombre", type:"text", required:true, ph:"Nombre y apellidos"},
+        {key:"categoria", label:"Categoría", type:"text", required:true, ph:"Ej. Alevín A"},
+        {key:"posicion", label:"Posición", type:"text", ph:"Ej. Lateral"},
+        {key:"nacimiento", label:"Nacimiento", type:"date"},
+        {key:"disponibilidad", label:"Disponibilidad", type:"select", options:["Disponible","Lesionado/a","Ausente"]},
+        {key:"documentacion", label:"Documentación", type:"select", options:["Al día","Pendiente"]}
+      ],
+      render: function(row){
+        var d = row.disponibilidad || "Disponible";
+        var dPill = d === "Disponible" ? "ok" : (d === "Lesionado/a" ? "bad" : "warn");
+        var doc = row.documentacion || "Al día";
+        var docPill = doc === "Al día" ? "ok" : "warn";
+        return [
+          esc(row.nombre), esc(row.categoria), esc(row.posicion || "—"), esc(row.nacimiento || "—"),
+          '<span class="pill '+dPill+'">'+esc(d)+'</span>',
+          '<span class="pill '+docPill+'">'+esc(doc)+'</span>'
+        ];
+      }
+    },
+    staff: {
+      collection: "staff",
+      columns: [
+        {key:"nombre", label:"Nombre", type:"text", required:true},
+        {key:"rol", label:"Rol", type:"text", ph:"Entrenador/a, Fisio…"},
+        {key:"categoria", label:"Categoría asignada", type:"text"}
+      ],
+      render: function(row){ return [esc(row.nombre), esc(row.rol || "—"), esc(row.categoria || "—")]; }
+    },
+    sessions: {
+      collection: "sessions",
+      columns: [
+        {key:"fecha", label:"Fecha", type:"date", required:true},
+        {key:"categoria", label:"Categoría", type:"text", required:true},
+        {key:"tipo", label:"Tipo", type:"select", options:["Físico","Técnico","Táctico","Partido","Descanso"]},
+        {key:"carga", label:"Carga (RPE 1–10)", type:"number", min:1, max:10},
+        {key:"objetivo", label:"Objetivo", type:"text", ph:"Ej. Transiciones rápidas"}
+      ],
+      render: function(row){
+        return [esc(row.fecha || "—"), esc(row.categoria), esc(row.tipo || "—"),
+          '<span class="num-cell">'+(row.carga != null ? esc(row.carga) : "—")+'</span>', esc(row.objetivo || "—")];
+      }
+    },
+    procedures: {
+      collection: "procedures",
+      columns: [
+        {key:"concepto", label:"Concepto", type:"text", required:true, ph:"Ej. Renovación licencia"},
+        {key:"tipo", label:"Tipo", type:"select", options:["Licencia","Seguro","Autorización","Otro"]},
+        {key:"referencia", label:"Categoría / jugador-a", type:"text"},
+        {key:"limite", label:"Fecha límite", type:"date"},
+        {key:"estado", label:"Estado", type:"select", options:["Pendiente","En trámite","Completado"]}
+      ],
+      render: function(row){
+        var flag = "";
+        var pill = "ok";
+        if (row.estado !== "Completado" && row.limite) {
+          var days = daysUntil(row.limite);
+          if (days != null) {
+            if (days < 0) { flag = "bad"; pill = "bad"; }
+            else if (days <= 14) { flag = "warn"; pill = "warn"; }
+          }
+        }
+        var estado = row.estado || "Pendiente";
+        if (flag === "" && estado !== "Completado") pill = "warn"; else if (estado === "Completado") pill = "ok";
+        return {
+          flagClass: flag ? "row-flag-" + flag : "",
+          cells: [esc(row.concepto), esc(row.tipo || "—"), esc(row.referencia || "—"), esc(row.limite || "—"),
+            '<span class="pill '+pill+'">'+esc(estado)+'</span>']
+        };
+      }
+    },
+    finance: {
+      collection: "finance",
+      columns: [
+        {key:"fecha", label:"Fecha", type:"date", required:true},
+        {key:"concepto", label:"Concepto", type:"text", required:true},
+        {key:"categoria", label:"Categoría", type:"text", ph:"Ej. Cadete B"},
+        {key:"tipo", label:"Tipo", type:"select", options:["Ingreso","Gasto"]},
+        {key:"importe", label:"Importe (€)", type:"number", step:"0.01", min:0}
+      ],
+      render: function(row){
+        var isIngreso = row.tipo === "Ingreso";
+        var amt = (isIngreso ? "+" : "−") + fmtEUR(Math.abs(Number(row.importe) || 0));
+        return [esc(row.fecha || "—"), esc(row.concepto), esc(row.categoria || "—"),
+          '<span class="pill '+(isIngreso ? "ok" : "bad")+'">'+esc(row.tipo || "—")+'</span>',
+          '<span class="num-cell">'+amt+'</span>'];
+      }
+    },
+    reports: {
+      collection: "reports",
+      columns: [
+        {key:"jugador", label:"Jugador/a", type:"text", required:true},
+        {key:"fecha", label:"Fecha", type:"date", required:true},
+        {key:"carga", label:"Carga (RPE 1–10)", type:"number", min:1, max:10},
+        {key:"minutos", label:"Minutos", type:"number", min:0},
+        {key:"observacion", label:"Observación", type:"text", ph:"Ej. Buena progresión física"}
+      ],
+      render: function(row){
+        return [esc(row.jugador), esc(row.fecha || "—"),
+          '<span class="num-cell">'+(row.carga != null ? esc(row.carga) : "—")+'</span>',
+          '<span class="num-cell">'+(row.minutos != null ? esc(row.minutos) : "—")+'</span>',
+          esc(row.observacion || "—")];
+      }
+    }
+  };
+
+  var state = {}; // collection -> array of {id, data}
+  var db = null;
+  var writable = false;
+
+  function esc(v){
+    if (v === undefined || v === null) return "";
+    return String(v).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function fmtEUR(n){ return n.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €"; }
+  function daysUntil(dateStr){
+    var d = new Date(dateStr + "T00:00:00");
+    if (isNaN(d.getTime())) return null;
+    var today = new Date(); today.setHours(0,0,0,0);
+    return Math.round((d - today) / 86400000);
+  }
+
+  function buildModule(key){
+    var cfg = MODULES[key];
+    var host = document.querySelector('[data-module="'+key+'"]');
+    if (!host) return;
+    var cols = cfg.columns;
+    var theadCells = cols.map(function(c){ return "<th>"+esc(c.label)+"</th>"; }).join("") + "<th></th>";
+    var html = ''
+      + '<div class="table-wrap"><table><thead><tr>'+theadCells+'</tr></thead>'
+      + '<tbody id="tbody-'+key+'"><tr class="empty-row"><td colspan="'+(cols.length+1)+'">Cargando…</td></tr></tbody>'
+      + '</table></div>'
+      + '<form class="add-form" id="form-'+key+'">'
+      + cols.map(function(c){
+          var field = '<div class="field"><label for="in-'+key+'-'+c.key+'">'+esc(c.label)+(c.required?" *":"")+'</label>';
+          if (c.type === "select") {
+            field += '<select id="in-'+key+'-'+c.key+'" name="'+c.key+'">' + c.options.map(function(o){ return '<option value="'+esc(o)+'">'+esc(o)+'</option>'; }).join("") + '</select>';
+          } else {
+            field += '<input id="in-'+key+'-'+c.key+'" name="'+c.key+'" type="'+c.type+'"'
+              + (c.ph ? ' placeholder="'+esc(c.ph)+'"' : '')
+              + (c.min != null ? ' min="'+c.min+'"' : '') + (c.max != null ? ' max="'+c.max+'"' : '')
+              + (c.step != null ? ' step="'+c.step+'"' : '') + (c.required ? ' required' : '') + '>';
+          }
+          field += '</div>';
+          return field;
+        }).join("")
+      + '<button type="submit" class="add-btn" id="btn-'+key+'">+ Añadir</button>'
+      + '</form>';
+    host.innerHTML = html;
+
+    document.getElementById("form-"+key).addEventListener("submit", function(ev){
+      ev.preventDefault();
+      if (!writable || !db) return;
+      var data = {};
+      cols.forEach(function(c){
+        var el = document.getElementById("in-"+key+"-"+c.key);
+        var v = el.value;
+        if (c.type === "number" && v !== "") v = Number(v);
+        data[c.key] = v;
+      });
+      data.createdAt = Date.now();
+      data.example = false;
+      var btn = document.getElementById("btn-"+key);
+      btn.disabled = true;
+      db.collection(cfg.collection).add(data).catch(function(){ /* rejected, ignore */ })
+        .then(function(){ btn.disabled = false; ev.target.reset(); });
+    });
+  }
+
+  function renderModule(key, docs){
+    var cfg = MODULES[key];
+    var tbody = document.getElementById("tbody-"+key);
+    if (!tbody) return;
+    if (!docs.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="'+(cfg.columns.length+1)+'">Todavía no hay filas. Añade la primera con el formulario de abajo.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = docs.map(function(row){
+      var out = cfg.render(row.data);
+      var cells = Array.isArray(out) ? out : out.cells;
+      var flagClass = Array.isArray(out) ? "" : out.flagClass;
+      var exBadge = row.data.example ? '<span class="exbadge">Ejemplo</span>' : "";
+      return '<tr class="'+flagClass+(row.data.example ? " example" : "")+'">'
+        + cells.map(function(c,i){ return "<td>" + c + (i === 0 ? exBadge : "") + "</td>"; }).join("")
+        + '<td><button class="del-btn" data-del="'+key+'" data-id="'+row.id+'" title="Eliminar" aria-label="Eliminar fila">×</button></td>'
+        + '</tr>';
+    }).join("");
+  }
+
+  document.addEventListener("click", function(ev){
+    var btn = ev.target.closest("[data-del]");
+    if (!btn || !writable || !db) return;
+    var key = btn.getAttribute("data-del");
+    var id = btn.getAttribute("data-id");
+    db.collection(MODULES[key].collection).doc(id).delete().catch(function(){});
+  });
+
+  function subscribeAll(){
+    Object.keys(MODULES).forEach(function(key){
+      var cfg = MODULES[key];
+      db.collection(cfg.collection).orderBy("createdAt","desc").limit(200).onSnapshot(function(snap){
+        var docs = snap.docs.map(function(d){ return {id:d.id, data:d.data() || {}}; });
+        state[key] = docs;
+        renderModule(key, docs);
+        onDataChange();
+      }, function(err){
+        console.warn("db subscribe error", key, err);
+      });
+    });
+  }
+
+  function onDataChange(){
+    renderLoadSummary();
+    renderFinanceStats();
+    renderPerfSummary();
+  }
+
+  function renderLoadSummary(){
+    var el = document.getElementById("loadSummary");
+    var sessions = state.sessions || [];
+    if (!sessions.length) { el.innerHTML = ""; return; }
+    var byCat = {};
+    sessions.forEach(function(r){
+      var cat = r.data.categoria || "Sin categoría";
+      var carga = Number(r.data.carga);
+      if (isNaN(carga)) return;
+      if (!byCat[cat]) byCat[cat] = {sum:0, n:0};
+      byCat[cat].sum += carga; byCat[cat].n += 1;
+    });
+    var cats = Object.keys(byCat);
+    if (!cats.length) { el.innerHTML = ""; return; }
+    el.innerHTML = '<h3 style="font-size:1rem;margin:0 0 10px;">Carga media por categoría</h3>' + cats.map(function(cat){
+      var avg = byCat[cat].sum / byCat[cat].n;
+      var pct = Math.min(100, (avg/10)*100);
+      return '<div class="bar-row"><span class="name">'+esc(cat)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><span class="val">'+avg.toFixed(1)+'</span></div>';
+    }).join("");
+  }
+
+  function renderFinanceStats(){
+    var el = document.getElementById("financeStats");
+    var rows = state.finance || [];
+    var ingresos = 0, gastos = 0;
+    rows.forEach(function(r){
+      var imp = Number(r.data.importe) || 0;
+      if (r.data.tipo === "Ingreso") ingresos += imp; else gastos += imp;
+    });
+    var balance = ingresos - gastos;
+    el.innerHTML = ''
+      + '<div class="stat"><span class="k">Ingresos</span><span class="v pos">'+fmtEUR(ingresos)+'</span></div>'
+      + '<div class="stat"><span class="k">Gastos</span><span class="v neg">'+fmtEUR(gastos)+'</span></div>'
+      + '<div class="stat"><span class="k">Balance</span><span class="v '+(balance<0?"neg":"pos")+'">'+fmtEUR(balance)+'</span></div>';
+  }
+
+  function renderPerfSummary(){
+    var el = document.getElementById("perfSummary");
+    var rows = state.reports || [];
+    if (!rows.length) { el.innerHTML = ""; return; }
+    var byPlayer = {};
+    rows.forEach(function(r){
+      var name = r.data.jugador || "Sin nombre";
+      var carga = Number(r.data.carga);
+      if (isNaN(carga)) return;
+      if (!byPlayer[name]) byPlayer[name] = {sum:0, n:0};
+      byPlayer[name].sum += carga; byPlayer[name].n += 1;
+    });
+    var names = Object.keys(byPlayer);
+    if (!names.length) { el.innerHTML = ""; return; }
+    el.innerHTML = '<h3 style="font-size:1rem;margin:0 0 10px;">Carga media por jugador/a</h3>' + names.map(function(name){
+      var avg = byPlayer[name].sum / byPlayer[name].n;
+      var pct = Math.min(100, (avg/10)*100);
+      return '<div class="bar-row"><span class="name">'+esc(name)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><span class="val">'+avg.toFixed(1)+'</span></div>';
+    }).join("");
+  }
+
+  function setStatus(live){
+    var s = document.getElementById("dbStatus");
+    var t = document.getElementById("dbStatusText");
+    var banner = document.getElementById("offlineBanner");
+    if (live) {
+      s.className = "status live"; t.textContent = "Datos en vivo";
+      banner.hidden = true;
+    } else {
+      s.className = "status off"; t.textContent = "Sin conexión a datos";
+      banner.hidden = false;
+    }
+  }
+
+  function initTabs(){
+    var buttons = document.querySelectorAll("#mainTabs button");
+    buttons.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        buttons.forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+        document.getElementById("panel-"+btn.getAttribute("data-panel")).classList.add("active");
+      });
+    });
+    var subButtons = document.querySelectorAll(".sub-btn");
+    subButtons.forEach(function(btn){
+      btn.addEventListener("click", function(){
+        subButtons.forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        document.querySelectorAll(".subpanel").forEach(function(p){ p.classList.remove("active"); });
+        document.getElementById("sub-"+btn.getAttribute("data-sub")).classList.add("active");
+      });
+    });
+  }
+
+  function boot(){
+    initTabs();
+    Object.keys(MODULES).forEach(buildModule);
+    onDataChange();
+
+    if (!window.claude || !window.claude.use) { setStatus(false); return; }
+    window.claude.use("db").then(function(ns){
+      if (!ns) { setStatus(false); return; }
+      db = ns; writable = true; setStatus(true);
+      subscribeAll();
+    }).catch(function(){ setStatus(false); });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+</body>
+</html>
